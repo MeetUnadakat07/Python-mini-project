@@ -1,62 +1,48 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-import sqlite3
 from datetime import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-# --------------------------- DATABASE HANDLER (OOP) --------------------------- #
-class Database:
-    def __init__(self, db_name="expenses.db"):
-        self.conn = sqlite3.connect(db_name)
-        self.create_table()
-
-    def create_table(self):
-        query = """
-        CREATE TABLE IF NOT EXISTS expenses (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            amount REAL NOT NULL,
-            category TEXT NOT NULL,
-            date TEXT NOT NULL
-        )
-        """
-        self.conn.execute(query)
-        self.conn.commit()
+class DataManager:
+    def __init__(self):
+        self.expenses = [] 
+        self.next_id = 1
 
     def add_expense(self, amount, category, date):
-        query = "INSERT INTO expenses (amount, category, date) VALUES (?, ?, ?)"
-        self.conn.execute(query, (amount, category, date))
-        self.conn.commit()
+        expense = {
+            "id": self.next_id,
+            "amount": amount,
+            "category": category,
+            "date": date
+        }
+        self.expenses.append(expense)
+        self.next_id += 1
 
-    def delete_expense(self, row_id):
-        query = "DELETE FROM expenses WHERE id = ?"
-        self.conn.execute(query, (row_id,))
-        self.conn.commit()
+    def delete_expense(self, expense_id):
+        self.expenses = [e for e in self.expenses if e["id"] != expense_id]
 
     def fetch_all(self):
-        query = "SELECT * FROM expenses"
-        cursor = self.conn.execute(query)
-        return cursor.fetchall()
+        return self.expenses
 
     def fetch_monthly_data(self):
-        query = "SELECT category, SUM(amount) FROM expenses GROUP BY category"
-        cursor = self.conn.execute(query)
-        return cursor.fetchall()
+        df = pd.DataFrame(self.expenses)
+        if df.empty:
+            return []
+        grouped = df.groupby("category")["amount"].sum().reset_index()
+        return list(zip(grouped["category"], grouped["amount"]))
 
-
-# --------------------------- MAIN APPLICATION (OOP) --------------------------- #
 class ExpenseTracker:
     def __init__(self, root):
         self.root = root
-        self.root.title("Personal Expense Tracker")
+        self.root.title("Personal Expense Tracker (No SQL)")
         self.root.geometry("700x500")
-        self.db = Database()
+        self.data = DataManager()
 
         self.create_widgets()
         self.load_data()
 
-    # --------------------------- UI SETUP --------------------------- #
     def create_widgets(self):
         frame = tk.Frame(self.root)
         frame.pack(pady=10)
@@ -74,51 +60,48 @@ class ExpenseTracker:
 
         tk.Button(frame, text="Add Expense", command=self.add_expense).grid(row=2, column=0, columnspan=2, pady=10)
 
-        # Table
         columns = ("ID", "Amount", "Category", "Date")
         self.tree = ttk.Treeview(self.root, columns=columns, show="headings")
         for col in columns:
             self.tree.heading(col, text=col)
-
         self.tree.pack(fill=tk.BOTH, expand=True)
 
         tk.Button(self.root, text="Delete Selected", command=self.delete_selected).pack(pady=10)
         tk.Button(self.root, text="Show Pie Chart", command=self.show_pie_chart).pack(pady=5)
 
-    # --------------------------- FUNCTIONALITY --------------------------- #
     def add_expense(self):
         try:
             amount = float(self.amount_entry.get())
             category = self.category_var.get()
             date = datetime.now().strftime("%Y-%m-%d")
 
-            self.db.add_expense(amount, category, date)
+            self.data.add_expense(amount, category, date)
             self.load_data()
             self.amount_entry.delete(0, tk.END)
 
         except ValueError:
-            messagebox.showerror("Error", "Please enter a valid number.")
+            messagebox.showerror("Error", "Enter a valid number.")
 
     def delete_selected(self):
         selected = self.tree.selection()
         if not selected:
-            messagebox.showwarning("Warning", "Please select an item to delete.")
+            messagebox.showwarning("Warning", "Select an item to delete.")
             return
 
         item = self.tree.item(selected[0])
         row_id = item["values"][0]
-        self.db.delete_expense(row_id)
+        self.data.delete_expense(row_id)
         self.load_data()
 
     def load_data(self):
         for row in self.tree.get_children():
             self.tree.delete(row)
 
-        for row in self.db.fetch_all():
-            self.tree.insert("", tk.END, values=row)
+        for e in self.data.fetch_all():
+            self.tree.insert("", tk.END, values=(e["id"], e["amount"], e["category"], e["date"]))
 
     def show_pie_chart(self):
-        data = self.db.fetch_monthly_data()
+        data = self.data.fetch_monthly_data()
         if not data:
             messagebox.showinfo("Info", "No data to display.")
             return
@@ -128,11 +111,10 @@ class ExpenseTracker:
 
         plt.figure(figsize=(6, 6))
         plt.pie(amounts, labels=categories, autopct="%1.1f%%")
-        plt.title("Monthly Spending Distribution")
+        plt.title("Spending Distribution")
         plt.show()
 
 
-# --------------------------- RUN APP --------------------------- #
 if __name__ == "__main__":
     root = tk.Tk()
     app = ExpenseTracker(root)
