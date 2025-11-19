@@ -3,6 +3,8 @@ from tkinter import ttk, messagebox
 import sqlite3
 from datetime import datetime
 import matplotlib.pyplot as plt
+
+
 class Database:
     def __init__(self, db_name="expenses.db"):
         self.conn = sqlite3.connect(db_name)
@@ -39,6 +41,8 @@ class Database:
         query = "SELECT category, SUM(amount) FROM expenses GROUP BY category"
         cursor = self.conn.execute(query)
         return cursor.fetchall()
+
+
 class ExpenseTracker:
     def __init__(self, root):
         self.root = root
