@@ -48,7 +48,6 @@ button:hover {
     background: #334ee0;
 }
 
-/* Table */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -68,7 +67,6 @@ th, td {
     cursor: pointer;
 }
 
-/* Chart container */
 .chart-box {
     width: 100%;
     display: flex;

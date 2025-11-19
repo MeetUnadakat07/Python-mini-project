@@ -7,7 +7,6 @@ app = Flask(__name__)
 DB = "expenses.db"
 
 
-# -------- DATABASE HELPERS --------
 def db_conn():
     conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row
@@ -31,10 +30,8 @@ def init_db():
 init_db()
 
 
-# -------- ROUTES --------
 @app.route("/")
 def home():
-    # CLEAR DB ON PAGE REFRESH
     conn = db_conn()
     conn.execute("DELETE FROM expenses")
     conn.commit()
