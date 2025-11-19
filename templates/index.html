@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Expense Tracker</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Expense Tracker</h1>
+
+        <!-- Add Expense Card -->
+        <div class="card">
+            <h2>Add Expense</h2>
+
+            <input id="amount" type="number" placeholder="Enter Amount">
+
+            <select id="category">
+                <option>Food</option>
+                <option>Travel</option>
+                <option>Entertainment</option>
+                <option>Shopping</option>
+                <option>Other</option>
+            </select>
+
+            <button onclick="addExpense()">Add Expense</button>
+        </div>
+
+        <!-- Expense List -->
+        <div class="card">
+            <h2>Expenses</h2>
+
+            <table id="expenseTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Amount</th>
+                        <th>Category</th>
+                        <th>Date</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- Pie Chart -->
+        <div class="card">
+            <h2>Spending Breakdown</h2>
+            <div class="chart-box">
+                <canvas id="chart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
